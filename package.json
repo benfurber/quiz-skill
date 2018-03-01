@@ -1,0 +1,30 @@
+{
+  "name": "quiz-skill",
+  "version": "1.0.0",
+  "description": "Quiz skill for Alexa",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/benfurber/quiz-skill.git"
+  },
+  "author": "Ben Furber",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/benfurber/quiz-skill/issues"
+  },
+  "homepage": "https://github.com/benfurber/quiz-skill#readme",
+  "dependencies": {
+    "alexa-app": "^4.2.1",
+    "chai": "^4.1.2",
+    "chai-as-promised": "^7.1.1",
+    "lodash": "^4.17.5",
+    "mocha": "^5.0.1",
+    "request-promise": "^4.2.2"
+  },
+  "devDependencies": {
+    "dynamodb-local": "0.0.20"
+  }
+}

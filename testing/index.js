@@ -15,7 +15,7 @@ function progressController() {
   // Work out where the user is
 
     // The user has just starting of the quiz
-    if (progress['round'] == 0 && progress['question'] == 0) {
+    if (progress['round'] == 0) {
       text.push(script['quizIntro']);
       text.push(content[quizID]['Description']);
       progress['round']++;
@@ -45,13 +45,11 @@ function progressController() {
       // Say the question
       text.push(content[quizID][progress['round']][progress['question']]['question']);
 
-
-      // The user will finish the round on this question
+      // Progress addition
       if (progress['question'] == questionsInRound) {
 
         // Progress to the next round
         progress['round']++;
-
         // Reset the question count
         progress['question'] = 0
 

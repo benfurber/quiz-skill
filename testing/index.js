@@ -1,37 +1,35 @@
-/* This code has been generated from your interaction model
-
-/* eslint-disable  func-names */
-/* eslint quote-props: ["error", "consistent"]*/
-
 // There are three sections, Text Strings, Skill Code, and Helper Function(s).
-// You can copy and paste the contents as the code for a new Lambda function, using the alexa-skill-kit-sdk-factskill template.
 // This code includes helper functions for compatibility with versions of the SDK prior to 1.0.9, which includes the dialog directives.
 
-var content = require('./content.js');
+var content = require('./quiz-content.js');
+var script = require('./quiz-script.js');
 
  // 1. Text strings =====================================================================================================
  //    Modify these strings and messages to change the behavior of your Lambda function
 
 var speechOutput;
 var reprompt;
-var welcomeOutput = "This is a placeholder welcome message.";
-var welcomeReprompt = "sample re-prompt text";
+var welcomeOutput = script['quizWelcome'];
+var welcomeReprompt = script['quizWelcomeReprompt'];
 
  // 2. Skill Code =======================================================================================================
 "use strict";
 var Alexa = require('alexa-sdk');
 var APP_ID = 'amzn1.ask.skill.71b5b8bd-87a5-48f4-a840-d467f28a92d5';
-var speechOutput = '';
 var handlers = {
     'LaunchRequest': function () {
-          this.attributes['quizId'] = 1;
-          this.emit(':ask', welcomeOutput, welcomeReprompt);
+
+        if(Object.keys(this.attributes).length === 0) { // Check if it's the first time the skill has been invoked
+          this.attributes['quizID'] = 1;
+          this.attributes['progress'] = {};
+          this.attributes['progress']['round'] = 0;
+          this.attributes['progress']['question'] = 0;
+        }
+
+        this.emit(':ask', welcomeOutput, welcomeReprompt);
     },
-	'AMAZON.HelpIntent': function () {
-        speechOutput = '';
-        reprompt = '';
-        this.emit(':ask', speechOutput, reprompt);
-    },
+	'AMAZON.HelpIntent': function () { this.emit(':ask', script['HelpIntent'], script['HelpIntentRepeat']); },
+
     'AMAZON.CancelIntent': function () {
         speechOutput = '';
         this.emit(':tell', speechOutput);
@@ -46,11 +44,9 @@ var handlers = {
         this.emit(':tell', speechOutput);
     },
 	"AMAZON.NextIntent": function () {
-		var speechOutput = "";
-    	//any intent slot variables are listed here for convenience
+      this.attributes['progress']['question']++;
 
-    	//Your custom intent handling goes here
-    	speechOutput = "This is a place holder response for the intent named AMAZON.NextIntent. This intent has no slots. Anything else?";
+    	speechOutput = "The next intent. Quiz question " + this.attributes['progress']['question'];
         this.emit(":ask", speechOutput, speechOutput);
     },
 	"AMAZON.RepeatIntent": function () {

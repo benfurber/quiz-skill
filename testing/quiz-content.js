@@ -3,7 +3,7 @@ module.exports = {
     "Description": "General knowledge",
     "Total": 2,
     "1": {
-      "Description": "All about plants.",
+      "Description": "Plants",
       "Total": 5,
       "1" : {
         "question": "Q1.1",
@@ -27,7 +27,7 @@ module.exports = {
       },
     },
     "2": {
-      "Description": "All about books.",
+      "Description": "Books",
       "Total": 5,
       "1" : {
         "question": "Q2.1",

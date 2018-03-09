@@ -1,6 +1,6 @@
 module.exports = {
-  "quizIntro": "Welcome to the quiz",
-  "quizIntroRepeat": "Welcome to the quiz",
+  "quizWelcome": "Welcome to the quiz skill from Marie Curie. It's five rounds of five questions. Say 'start' to start the quiz.",
+  "quizWelcomeRepeat": "Welcome to the quiz skill from Marie Curie. It's five rounds of five questions. Say 'start' to start the quiz.",
   "HelpIntent": "The help intent",
   "HelpIntentRepeat": "The help intent repeat",
   "startOfRound": "New round",

@@ -4,13 +4,74 @@
 var content = require('./quiz-content.js');
 var script = require('./quiz-script.js');
 
+function progressController(repeat=false) {
+
+  var text = [];
+
+  function progressCounter(type) {
+    if (repeat == false) {
+      progress[type]++;
+    }
+  }
+
+  // Work out where the user is
+
+    // The user has just starting of the quiz
+    if (progress['round'] == 0) {
+      text.push();
+      text.push('This is a ' + content[quizID]['Description'] + ' quiz.');
+      progressCounter('round');
+    }
+
+    // The user is about to start a new round
+    if (progress['round'] > 0 && progress['question'] == 0) {
+      text.push(script['startOfRound'] + ' - ' + content[quizID][progress['round']]['Description'] + '.');
+      progressCounter('question');
+    };
+
+    // The user needs a question
+    if (progress['round'] > 0 && progress['question'] > 0) {
+
+      // Finding out the total number of questions in the round
+      var questionsInRound = content[quizID][progress['round']]['Total'];
+
+      // The user will finish the round on this question
+      if (progress['question'] == questionsInRound) {
+        text.push(script['endofRound']);
+      };
+
+      // Say what question the user is on
+      text.push('Question ' + progress['question'] + ' -');
+
+      // Say the question
+      text.push(content[quizID][progress['round']][progress['question']]['question']);
+
+      // Progress addition
+      if (progress['question'] == questionsInRound) {
+
+        // Progress to the next round
+        progressCounter('round');
+        // Reset the question count
+        progress['question'] = 0
+
+      } else {
+        progressCounter('question');
+      };
+
+    };
+
+  // Action
+
+    // Call the text
+    return text.join(' ');
+
+};
+
  // 1. Text strings =====================================================================================================
  //    Modify these strings and messages to change the behavior of your Lambda function
 
 var speechOutput;
 var reprompt;
-var welcomeOutput = script['quizWelcome'];
-var welcomeReprompt = script['quizWelcomeReprompt'];
 
  // 2. Skill Code =======================================================================================================
 "use strict";
@@ -26,7 +87,7 @@ var handlers = {
           this.attributes['progress']['question'] = 0;
         }
 
-        this.emit(':ask', welcomeOutput, welcomeReprompt);
+        this.emit(':ask', script['quizWelcome'], script['quizWelcomeReprompt']);
     },
 	'AMAZON.HelpIntent': function () { this.emit(':ask', script['HelpIntent'], script['HelpIntentRepeat']); },
 
@@ -44,10 +105,10 @@ var handlers = {
         this.emit(':tell', speechOutput);
     },
 	"AMAZON.NextIntent": function () {
-      this.attributes['progress']['question']++;
+        this.attributes['progress']['question']++;
 
     	speechOutput = "The next intent. Quiz question " + this.attributes['progress']['question'];
-        this.emit(":ask", speechOutput, speechOutput);
+        this.emit(":ask", progressController, speechOutput);
     },
 	"AMAZON.RepeatIntent": function () {
 		var speechOutput = "";
@@ -58,6 +119,10 @@ var handlers = {
         this.emit(":ask", speechOutput, speechOutput);
     },
 	"AMAZON.StartOverIntent": function () {
+
+        this.attributes['progress']['round'] = 0;
+        this.attributes['progress']['question'] = 0;
+
 		var speechOutput = "";
     	//any intent slot variables are listed here for convenience
 

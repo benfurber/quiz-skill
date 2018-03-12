@@ -4,69 +4,6 @@
 var content = require('./quiz-content.js');
 var script = require('./quiz-script.js');
 
-function progressController(repeat=false) {
-
-  var text = [];
-
-  function progressCounter(type) {
-    if (repeat == false) {
-      progress[type]++;
-    }
-  }
-
-  // Work out where the user is
-
-    // The user has just starting of the quiz
-    if (progress['round'] == 0) {
-      text.push();
-      text.push('This is a ' + content[quizID]['Description'] + ' quiz.');
-      progressCounter('round');
-    }
-
-    // The user is about to start a new round
-    if (progress['round'] > 0 && progress['question'] == 0) {
-      text.push(script['startOfRound'] + ' - ' + content[quizID][progress['round']]['Description'] + '.');
-      progressCounter('question');
-    };
-
-    // The user needs a question
-    if (progress['round'] > 0 && progress['question'] > 0) {
-
-      // Finding out the total number of questions in the round
-      var questionsInRound = content[quizID][progress['round']]['Total'];
-
-      // The user will finish the round on this question
-      if (progress['question'] == questionsInRound) {
-        text.push(script['endofRound']);
-      };
-
-      // Say what question the user is on
-      text.push('Question ' + progress['question'] + ' -');
-
-      // Say the question
-      text.push(content[quizID][progress['round']][progress['question']]['question']);
-
-      // Progress addition
-      if (progress['question'] == questionsInRound) {
-
-        // Progress to the next round
-        progressCounter('round');
-        // Reset the question count
-        progress['question'] = 0
-
-      } else {
-        progressCounter('question');
-      };
-
-    };
-
-  // Action
-
-    // Call the text
-    return text.join(' ');
-
-};
-
  // 1. Text strings =====================================================================================================
  //    Modify these strings and messages to change the behavior of your Lambda function
 
@@ -87,7 +24,9 @@ var handlers = {
           this.attributes['progress']['question'] = 0;
         }
 
-        this.emit(':ask', script['quizWelcome'], script['quizWelcomeReprompt']);
+        speechOutput = questionAsker(this.attributes['quizID'],this.attributes['progress']['round'],this.attributes['progress']['question']);
+
+        this.emit(':ask', speechOutput, speechOutput);
     },
 	'AMAZON.HelpIntent': function () { this.emit(':ask', script['HelpIntent'], script['HelpIntentRepeat']); },
 
@@ -105,10 +44,11 @@ var handlers = {
         this.emit(':tell', speechOutput);
     },
 	"AMAZON.NextIntent": function () {
+
+    	speechOutput = questionAsker(this.attributes['quizID'],this.attributes['progress']['round'],this.attributes['progress']['question']);
         this.attributes['progress']['question']++;
 
-    	speechOutput = "The next intent. Quiz question " + this.attributes['progress']['question'];
-        this.emit(":ask", progressController, speechOutput);
+        this.emit(":ask", speechOutput, speechOutput);
     },
 	"AMAZON.RepeatIntent": function () {
 		var speechOutput = "";
@@ -155,89 +95,43 @@ exports.handler = (event, context) => {
 };
 
 //    END of Intent Handlers {} ========================================================================================
-// 3. Helper Function  =================================================================================================
+// 3. Functions  =================================================================================================
 
-function resolveCanonical(slot){
-	//this function looks at the entity resolution part of request and returns the slot value if a synonyms is provided
-    try{
-		var canonical = slot.resolutions.resolutionsPerAuthority[0].values[0].value.name;
-	}catch(err){
-	    console.log(err.message);
-	    var canonical = slot.value;
-	};
-	return canonical;
-};
+function questionAsker(quizID,roundID,questionID,repeat=false) {
 
-function delegateSlotCollection(){
-  console.log("in delegateSlotCollection");
-  console.log("current dialogState: "+this.event.request.dialogState);
-    if (this.event.request.dialogState === "STARTED") {
-      console.log("in Beginning");
-	  var updatedIntent= null;
-	  // updatedIntent=this.event.request.intent;
-      //optionally pre-fill slots: update the intent object with slot values for which
-      //you have defaults, then return Dialog.Delegate with this updated intent
-      // in the updatedIntent property
-      //this.emit(":delegate", updatedIntent); //uncomment this is using ASK SDK 1.0.9 or newer
+    // Creat an array for the output
+    var text = [];
 
-	  //this code is necessary if using ASK SDK versions prior to 1.0.9
-	  if(this.isOverridden()) {
-			return;
-		}
-		this.handler.response = buildSpeechletResponse({
-			sessionAttributes: this.attributes,
-			directives: getDialogDirectives('Dialog.Delegate', updatedIntent, null),
-			shouldEndSession: false
-		});
-		this.emit(':responseReady', updatedIntent);
-
-    } else if (this.event.request.dialogState !== "COMPLETED") {
-      console.log("in not completed");
-      // return a Dialog.Delegate directive with no updatedIntent property.
-      //this.emit(":delegate"); //uncomment this is using ASK SDK 1.0.9 or newer
-
-	  //this code necessary is using ASK SDK versions prior to 1.0.9
-		if(this.isOverridden()) {
-			return;
-		}
-		this.handler.response = buildSpeechletResponse({
-			sessionAttributes: this.attributes,
-			directives: getDialogDirectives('Dialog.Delegate', updatedIntent, null),
-			shouldEndSession: false
-		});
-		this.emit(':responseReady');
-
-    } else {
-      console.log("in completed");
-      console.log("returning: "+ JSON.stringify(this.event.request.intent));
-      // Dialog is now complete and all required slots should be filled,
-      // so call your normal intent handler.
-      return this.event.request.intent;
+    if (roundID == 0) {
+      text.push('This is a ' + content[quizID]['Description'] + ' quiz.');
+      roundID++;
     }
-}
+
+    // The user is about to start a new round
+    if (roundID > 0 && questionID == 0) {
+      text.push(script['startOfRound'] + ' - ' + content[quizID][roundID][questionID]['question'] + '.');
+      questionID++;
+    }
+
+    // User needs a question
+    // Finding out the total number of questions in the round
+    var questionsInRound = content[quizID][roundID]['Total'];
+
+    // The user will finish the round on this question
+    if (questionID == questionsInRound) {
+      text.push(script['endofRound']);
+    }
+
+    text.push('Question ' + questionID + ' -');
 
 
-function randomPhrase(array) {
-    // the argument is an array [] of words or phrases
-    var i = 0;
-    i = Math.floor(Math.random() * array.length);
-    return(array[i]);
-}
-function isSlotValid(request, slotName){
-        var slot = request.intent.slots[slotName];
-        //console.log("request = "+JSON.stringify(request)); //uncomment if you want to see the request
-        var slotValue;
+    text.push(content[quizID][roundID][questionID]['question']);
 
-        //if we have a slot, get the text and store it into speechOutput
-        if (slot && slot.value) {
-            //we have a value in the slot
-            slotValue = slot.value.toLowerCase();
-            return slotValue;
-        } else {
-            //we didn't get a value in the slot.
-            return false;
-        }
+    questionID++;
+
+    return text.join(' ');
 }
+
 
 //These functions are here to allow dialog directives to work with SDK versions prior to 1.0.9
 //will be removed once Lambda templates are updated with the latest SDK

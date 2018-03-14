@@ -51,12 +51,6 @@ var handlers = {
         this.emit(':saveState', true); //uncomment to save attributes to db on session end
         this.emit(':tell', speechOutput);
     },
-	"AMAZON.NextIntent": function () {
-        this.attributes['progress']['question']++;
-    	speechOutput = questionAsker(this.attributes['quizID'],this.attributes['progress']['round'],this.attributes['progress']['question']);
-
-        this.emit(":ask", speechOutput, speechOutput);
-    },
 	"AMAZON.RepeatIntent": function () {
     	speechOutput = questionAsker(this.attributes['quizID'],this.attributes['progress']['round'],this.attributes['progress']['question']);
         this.emit(":ask", speechOutput, speechOutput);
@@ -64,7 +58,7 @@ var handlers = {
 	"AMAZON.StartOverIntent": function () {
 
         this.attributes['progress']['round'] = 1;
-        this.attributes['progress']['question'] = 1;
+        this.attributes['progress']['question'] = 0;
 
 		var speechOutput = "";
     	//any intent slot variables are listed here for convenience
@@ -75,10 +69,16 @@ var handlers = {
     },
 	"StartQuizIntent": function () {
 
+      if (5 >= this.attributes['progress']['question'] ) {
         this.attributes['progress']['question']++;
+      } else {
+        this.attributes['progress']['round']++;
+        this.attributes['progress']['question'] = 1;
+      }
+
     	speechOutput = questionAsker(this.attributes['quizID'],this.attributes['progress']['round'],this.attributes['progress']['question']);
 
-        this.emit(":ask", speechOutput, speechOutput);
+      this.emit(":ask", speechOutput, speechOutput);
     },
 	'Unhandled': function () {
         speechOutput = "The skill didn't quite understand what you wanted.  Do you want to try something else?";
@@ -99,22 +99,7 @@ exports.handler = (event, context) => {
 //    END of Intent Handlers {} ========================================================================================
 // 3. Functions  =================================================================================================
 
-function progressProgresser(type,typeData) {
-
-  // What the progress decision will populate
-  var progresser = '';
-
-  if (type == 'round') {
-    if (typeData == 0) {
-      progresser = typeData++;
-    }
-  }
-
-  return progresser;
-
-}
-
-function questionAsker(quizID,roundID,questionID,repeat=false) {
+function questionAsker(quizID,roundID,questionID) {
 
     // Creat an array for the output
     var text = [];
@@ -123,16 +108,34 @@ function questionAsker(quizID,roundID,questionID,repeat=false) {
     // Finding out the total number of questions in the round.
     var questionsInRound = 5;
 
-    // Say that this is the last question in the round, if it is.
-    if (questionID == questionsInRound) {
-      text.push(script['endofRound']);
+    // If it's time to ask a question
+    if (questionsInRound >= questionID) {
+
+      // Say that this is the last question in the round, if it is.
+      if (questionID == questionsInRound) {
+        text.push(script['endofRound']);
+      }
+
+      // Introduce the question.
+      text.push('Question ' + questionID + ' -');
+
+      // The question.
+      text.push(content[quizID][roundID][questionID]['question']);
+
+    } else { // Time to read the answers
+
+      text.push(script['answersIntro']);
+      text.push('This round was ' + content[quizID][roundID]['0']['question'])
+
+      for (var i = 1; i < 6; i++) {
+        text.push('Question ' + i + ' was, ' + content[quizID][roundID][i]['question']);
+        text.push('<break time="1s"/>');
+        text.push(content[quizID][roundID][i]['answer'] + '.');
+        text.push('<break time="3s"/>');
+      }
+
     }
 
-    // Introduce the question.
-    text.push('Question ' + questionID + ' -');
-
-    // The question.
-    text.push(content[quizID][roundID][questionID]['question']);
 
     return text.join(' ');
 }

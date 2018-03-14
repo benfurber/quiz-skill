@@ -6,4 +6,5 @@ module.exports = {
   "startOfRound": "New round.",
   "endofRound": "Last question of the round.",
   "endofQuiz": "This is the end of the quiz.",
+  "answersIntro": "Round answers intro.",
 };

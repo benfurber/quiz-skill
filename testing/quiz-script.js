@@ -5,6 +5,7 @@ module.exports = {
   "HelpIntentRepeat": "The help intent repeat.",
   "startOfRound": "New round.",
   "endofRound": "Last question of the round.",
-  "endofQuiz": "This is the end of the quiz.",
-  "answersIntro": "Round answers intro.",
+  "endofQuiz": "And that's the quiz! Who won!? Thanks for playing.",
+  "answersIntro": "I'll now give you the answers for the round.",
+  "startOver": "You'll now go back to the start of the quiz."
 };

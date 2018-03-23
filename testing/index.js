@@ -17,65 +17,50 @@ var APP_ID = 'amzn1.ask.skill.71b5b8bd-87a5-48f4-a840-d467f28a92d5';
 var handlers = {
     'LaunchRequest': function () {
 
-        // Called if this is the first time the skill has been opened by the user.
-        if(Object.keys(this.attributes).length === 0) {
-          this.attributes['quizID'] = 1;
-          this.attributes['progress'] = {};
-          this.attributes['progress']['round'] = 0;
-          this.attributes['progress']['question'] = 0;
-        }
+      // Called if this is the first time the skill has been opened by the user.
+      if(Object.keys(this.attributes).length === 0) {
+        this.attributes['quizID'] = 1;
+        this.attributes['progress'] = {};
+        this.attributes['progress']['round'] = 0;
+        this.attributes['progress']['question'] = 0;
+      }
 
-        if (this.attributes['progress']['round'] == 0) { // If this is the user's first time.
-            speechOutput = script['quizWelcome'];
-            this.attributes['progress']['round']++;
-        } else { // If the user has been here before.
-            if (5 >= this.attributes['progress']['question'] ) { // If it's a normal question.
-                this.attributes['progress']['question']++;
-            } else { // If it's the end of a round
-                this.attributes['progress']['round']++;
-                this.attributes['progress']['question'] = 1;
-            }
-            speechOutput = questionAsker(this.attributes['quizID'],this.attributes['progress']['round'],this.attributes['progress']['question']);
-        }
+      // Main question progressing loop
+      if (this.attributes['progress']['round'] == 0) { // If this is the user's first time.
+          speechOutput = script['quizWelcome'];
+          this.attributes['progress']['round']++;
+      } else { // If the user has been here before.
+          if (5 >= this.attributes['progress']['question'] ) { // The normal question progression
+              this.attributes['progress']['question']++;
+          } else { // If it's the end of a round
+              this.attributes['progress']['round']++;
+              this.attributes['progress']['question'] = 1;
+          }
+          speechOutput = questionAsker(this.attributes['quizID'],this.attributes['progress']['round'],this.attributes['progress']['question']);
+      }
 
-        this.emit(':tell', speechOutput, speechOutput);
-
-    },
-	'AMAZON.HelpIntent': function () { this.emit(':ask', script['HelpIntent'], script['HelpIntentRepeat']); },
-
-    'AMAZON.CancelIntent': function () {
-        speechOutput = '';
-        this.emit(':tell', speechOutput);
-    },
-    'AMAZON.StopIntent': function () {
-        speechOutput = '';
-        this.emit(':tell', speechOutput);
-    },
-    'SessionEndedRequest': function () {
-        speechOutput = '';
-        this.emit(':saveState', true);
-        this.emit(':tell', speechOutput);
-    },
-	"AMAZON.RepeatIntent": function () {
+      this.emit(':tell', speechOutput);
+  },
+	'AMAZON.RepeatIntent': function () {
     	speechOutput = questionAsker(this.attributes['quizID'],this.attributes['progress']['round'],this.attributes['progress']['question']);
-        this.emit(":ask", speechOutput, speechOutput);
-    },
-	"AMAZON.StartOverIntent": function () {
-
-      this.attributes['progress']['round'] = 1;
+      this.emit(":tell", speechOutput);
+  },
+	'AMAZON.StartOverIntent': function () {
+      this.attributes['progress']['round'] = 0;
       this.attributes['progress']['question'] = 0;
 
 		  var speechOutput = script['HelpIntent'];
       this.emit(":tell", speechOutput, speechOutput);
-    },
-	"NotUsingIntent": function () {
-    	speechOutput = "Well done, you've ended up in the intent I didn't want to build but was required to..."
-      this.emit(":ask", speechOutput, speechOutput);
-    },
-	'Unhandled': function () {
-        speechOutput = "The skill didn't quite understand what you wanted. Do you want to try something else?";
-        this.emit(':ask', speechOutput, speechOutput);
-    }
+  },
+  'SessionEndedRequest': function () {
+      this.emit(':saveState', true);
+      this.emit(':tell', script['sessionEndedRequest']);
+  },
+  'NotUsingIntent':       function () { this.emit(':tell', script['notUsingIntent']); },
+  'AMAZON.CancelIntent':  function () { this.emit(':tell', script['cancelIntent']); },
+  'AMAZON.StopIntent':    function () { this.emit(':tell', script['stopIntent']); },
+  'AMAZON.HelpIntent':    function () { this.emit(':ask', script['helpIntent'], script['helpIntent']); },
+	'Unhandled':            function () { this.emit(':ask', script['unhandled'], script['unhandled']); }
 };
 
 exports.handler = (event, context) => {
@@ -118,13 +103,12 @@ function questionAsker(quizID,roundID,questionID) {
     } else { // Time to read the answers
 
       text.push(script['answersIntro']);
-      text.push('This round was ' + content[quizID][roundID]['0']['question'])
+      text.push('This round was ' + content[quizID][roundID]['0']['question']);
 
       for (var i = 1; i < 6; i++) {
         text.push('Question ' + i + ' was, \'' + content[quizID][roundID][i]['question'] + '\'');
-        text.push('<break time="1s"/>');
         text.push(content[quizID][roundID][i]['answer']);
-        text.push('<break time="3s"/>');
+        text.push('<break time="1s"/>');
       }
 
     }
